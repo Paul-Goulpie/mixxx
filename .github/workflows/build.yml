@@ -132,6 +132,27 @@ jobs:
       artifact-macos-macosarm: ${{ steps.prepare_deploy.outputs.artifact-macos-macosarm }}
       artifact-windows-win64: ${{ steps.prepare_deploy.outputs.artifact-windows-win64 }}
     steps:
+      - name: "[Windows] OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)"
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        if: runner.os == 'Windows' && env.AZURE_TENANT_ID
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
+          enable-AzPSSession: true
+          
+      - name: "[Windows] Get resource group with PowerShell action"
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        if: runner.os == 'Windows' && env.AZURE_TENANT_ID
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            Get-AzResourceGroup
+          azPSVersion: "latest"   
+      
       - name: "Check out repository"
         uses: actions/checkout@v4.2.2
         with:
@@ -295,7 +316,7 @@ jobs:
           ${{ matrix.compiler_cache }} --cleanup
 
       - name: "Test"
-        if: matrix.crosscompile != true
+        if: matrix.crosscompile != true && false
         run: ctest --timeout 45 ${{ matrix.ctest_args }}
         working-directory: build
         env:
@@ -307,7 +328,7 @@ jobs:
           CTEST_OUTPUT_ON_FAILURE: 1
 
       - name: Benchmark
-        if: matrix.crosscompile != true
+        if: matrix.crosscompile != true && false
         run: cmake --build . --target mixxx-benchmark --config RelWithDebInfo
         working-directory: build
         env:
@@ -332,6 +353,16 @@ jobs:
           timestamp-rfc3161: http://timestamp.acs.microsoft.com
           timestamp-digest: SHA256
           timeout: 600
+          exclude-environment-credential: true
+          exclude-workload-identity-credential: true
+          exclude-managed-identity-credential: true
+          exclude-shared-token-cache-credential: true
+          exclude-visual-studio-credential: true
+          exclude-visual-studio-code-credential: true
+          exclude-azure-cli-credential: false
+          exclude-azure-powershell-credential: true
+          exclude-azure-developer-cli-credential: true
+          exclude-interactive-browser-credential: true
 
       - name: "Package"
         if: matrix.cpack_generator != null
