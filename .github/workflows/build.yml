@@ -132,28 +132,7 @@ jobs:
       artifact-macos-macosintel: ${{ steps.prepare_deploy.outputs.artifact-macos-macosintel }}
       artifact-macos-macosarm: ${{ steps.prepare_deploy.outputs.artifact-macos-macosarm }}
       artifact-windows-win64: ${{ steps.prepare_deploy.outputs.artifact-windows-win64 }}
-    steps:
-      - name: "[Windows] OIDC Login to Azure Public Cloud with AzPowershell (enableAzPSSession true)"
-        env:
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        if: runner.os == 'Windows' && env.AZURE_TENANT_ID
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
-          enable-AzPSSession: true
-          
-      - name: "[Windows] Get resource group with PowerShell action"
-        env:
-          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        if: runner.os == 'Windows' && env.AZURE_TENANT_ID
-        uses: azure/powershell@v1
-        with:
-          inlineScript: |
-            Get-AzResourceGroup
-          azPSVersion: "latest"   
-      
+    steps:            
       - name: "Check out repository"
         uses: actions/checkout@v4.2.2
         with:
@@ -336,15 +315,22 @@ jobs:
           # Render analyzer waveform tests to an offscreen buffer
           QT_QPA_PLATFORM: ${{ matrix.qt_qpa_platform }}
 
+      - name: "[Windows] OIDC Login to Azure Public Cloud"
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        if: runner.os == 'Windows' && env.AZURE_TENANT_ID
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }} 
+
       - name: "[Windows] Sign executables"
         env:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         if: runner.os == 'Windows' && env.AZURE_TENANT_ID
         uses: azure/trusted-signing-action@v0.5.0
         with:
-          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           endpoint: https://weu.codesigning.azure.net/
           trusted-signing-account-name: mixxx
           certificate-profile-name: mixxx
@@ -416,9 +402,6 @@ jobs:
         if: runner.os == 'Windows' && env.AZURE_TENANT_ID
         uses: azure/trusted-signing-action@v0.5.0
         with:
-          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
           endpoint: https://weu.codesigning.azure.net/
           trusted-signing-account-name: mixxx
           certificate-profile-name: mixxx
