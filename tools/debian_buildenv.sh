@@ -112,7 +112,12 @@ case "$1" in
             qml6-module-qtquick-templates \
             qml6-module-qtquick-window \
             qml6-module-qt-labs-qmlmodels \
+            python3-pip \
             "${PACKAGES_EXTRA[@]}"
+
+        sudo pip3 install --break-system-packages \
+             yt-dlp==2025.7.21 \
+             ytmusicapi==1.11.0
         ;;
     *)
         echo "Usage: $0 [options]"
