@@ -4933,6 +4933,64 @@ if(WAVPACK)
   target_link_libraries(mixxx-lib PRIVATE WavPack::wavpack)
 endif()
 
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+# ---- yt-dlp ----
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c "
+import pkg_resources
+try:
+    dist = pkg_resources.get_distribution('yt-dlp')
+    if dist.version != '2025.7.21':
+        print(f'yt-dlp version mismatch: {dist.version} found, 2025.7.21 required')
+        raise SystemExit(1)
+    else:
+        print(f'yt-dlp version OK: {dist.version}')
+except Exception as e:
+    print(f'yt-dlp missing or wrong version: {e}')
+    raise SystemExit(1)
+"
+  RESULT_VARIABLE YTDLP_STATUS
+  OUTPUT_VARIABLE YTDLP_OUT
+  ERROR_VARIABLE YTDLP_ERR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_STRIP_TRAILING_WHITESPACE
+)
+
+if (NOT YTDLP_STATUS EQUAL 0)
+  message(FATAL_ERROR "Python package check failed for 'yt-dlp':\n${YTDLP_OUT}\n${YTDLP_ERR}")
+else()
+  message(STATUS "${YTDLP_OUT}")
+endif()
+
+# ---- ytmusicapi ----
+execute_process(
+  COMMAND ${Python3_EXECUTABLE} -c "
+import pkg_resources
+try:
+    dist = pkg_resources.get_distribution('ytmusicapi')
+    if dist.version != '1.11.0':
+        print(f'ytmusicapi version mismatch: {dist.version} found, 1.11.0 required')
+        raise SystemExit(1)
+    else:
+        print(f'ytmusicapi version OK: {dist.version}')
+except Exception as e:
+    print(f'ytmusicapi missing or wrong version: {e}')
+    raise SystemExit(1)
+"
+  RESULT_VARIABLE YTMUSIC_STATUS
+  OUTPUT_VARIABLE YTMUSIC_OUT
+  ERROR_VARIABLE YTMUSIC_ERR
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_STRIP_TRAILING_WHITESPACE
+)
+
+if (NOT YTMUSIC_STATUS EQUAL 0)
+  message(FATAL_ERROR "Python package check failed for 'ytmusicapi':\n${YTMUSIC_OUT}\n${YTMUSIC_ERR}")
+else()
+  message(STATUS "${YTMUSIC_OUT}")
+endif()
+
 target_precompile_headers(
   mixxx-lib
   PUBLIC ${MIXXX_LIB_PRECOMPILED_HEADER} ${MIXXX_COMMON_PRECOMPILED_HEADER}
